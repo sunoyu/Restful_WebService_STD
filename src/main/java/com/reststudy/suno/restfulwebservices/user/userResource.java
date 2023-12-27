@@ -1,12 +1,16 @@
 package com.reststudy.suno.restfulwebservices.user;
 
 import jakarta.validation.Valid;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
 public class userResource {
@@ -21,14 +25,25 @@ public class userResource {
         return service.findAll();
     }
 
+
+    // http://localhost:8080/users
+
+    // HATEOAS
+    // EntityModel
+    // WebMvcLinkBuilder
     @GetMapping("/users/{id}")
-    public User retrieveUser(@PathVariable int id) {
+    public EntityModel<User> retrieveUser(@PathVariable int id) {
         User user = service.findOne(id);
 
         if(user==null)
             throw new UserNotFoundException("id:"+id);
 
-        return user;
+        EntityModel<User> entityModel = EntityModel.of(user);     // User을 래핑
+        WebMvcLinkBuilder link = WebMvcLinkBuilder.linkTo(methodOn(this.getClass()).retrieveAllUsers());// 링크 인스턴스 빌더를 용이하게 해주는 클래스
+
+        entityModel.add(link.withRel("all-users"));
+
+        return entityModel;
     }
 
     @PostMapping("/users")
