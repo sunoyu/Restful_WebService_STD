@@ -1,5 +1,6 @@
 package com.reststudy.suno.restfulwebservices.user;
 
+import com.reststudy.suno.restfulwebservices.jpa.UserRepository;
 import jakarta.validation.Valid;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
@@ -9,36 +10,32 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Optional;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
-public class userResource {
-    private UserDaoService service;  // 오토와이어드 필요 없이 아래 ⬇️⬇️ 생성자에 주입해주면 된다.
+public class UseJparResource {
+    private UserRepository repository;    // contoller와 db연결을 위한
 
-    public userResource(UserDaoService service) {
-        this.service = service;
+    public UseJparResource(UserDaoService service, UserRepository repository) {
+        this.repository = repository;
     }
 
-    @GetMapping(path = "/users")
+    @GetMapping(path = "/jpa/users")
     public List<User> retrieveAllUsers() {
-        return service.findAll();
+        return repository.findAll();
     }
 
 
-    // http://localhost:8080/users
-
-    // HATEOAS
-    // EntityModel
-    // WebMvcLinkBuilder
-    @GetMapping("/users/{id}")
+    @GetMapping("/jpa/users/{id}")
     public EntityModel<User> retrieveUser(@PathVariable int id) {
-        User user = service.findOne(id);
+        Optional<User> user = repository.findById(id);
 
-        if(user==null)
+        if(user.isEmpty())
             throw new UserNotFoundException("id:"+id);
 
-        EntityModel<User> entityModel = EntityModel.of(user);     // User을 래핑
+        EntityModel<User> entityModel = EntityModel.of(user.get());
         WebMvcLinkBuilder link = WebMvcLinkBuilder.linkTo(methodOn(this.getClass()).retrieveAllUsers());// 링크 인스턴스 빌더를 용이하게 해주는 클래스
 
         entityModel.add(link.withRel("all-users"));
@@ -46,9 +43,9 @@ public class userResource {
         return entityModel;
     }
 
-    @PostMapping("/users")
+    @PostMapping("/jpa/users")
     public ResponseEntity<Object> createUser(@Valid @RequestBody User user) {
-        User savedUser = service.save(user);
+        User savedUser = repository.save(user);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
@@ -58,9 +55,9 @@ public class userResource {
         return ResponseEntity.created(location).build();
     }
 
-    @DeleteMapping("/users/{id}")
+    @DeleteMapping("/jpa/users/{id}")
     public void deleteUser(@PathVariable int id) {
-        service.deleteById(id);
+        repository.deleteById(id);
     }
 
 
