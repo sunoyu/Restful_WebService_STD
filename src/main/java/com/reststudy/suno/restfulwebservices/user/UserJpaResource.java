@@ -16,24 +16,24 @@ import java.util.Optional;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 @RestController
-public class UseJparResource {
-    private UserRepository repository;    // contoller와 db연결을 위한
+public class UserJpaResource {
+    private UserRepository userRepository;    // contoller와 db연결을 위한
     private PostRepository postRepository;
 
-    public UseJparResource(UserDaoService service, UserRepository repository, PostRepository postRepository) {   // PostRepositoy 생성자 주입
-        this.repository = repository;
+    public UserJpaResource(UserDaoService service, UserRepository userRepository, PostRepository postRepository) {   // PostRepositoy 생성자 주입
+        this.userRepository = userRepository;
         this.postRepository = postRepository;
     }
 
     @GetMapping(path = "/jpa/users")
     public List<User> retrieveAllUsers() {
-        return repository.findAll();
+        return userRepository.findAll();
     }
 
 
     @GetMapping("/jpa/users/{id}")
     public EntityModel<User> retrieveUser(@PathVariable int id) {
-        Optional<User> user = repository.findById(id);
+        Optional<User> user = userRepository.findById(id);
 
         if(user.isEmpty())
             throw new UserNotFoundException("id:"+id);
@@ -48,7 +48,7 @@ public class UseJparResource {
 
     @PostMapping("/jpa/users")
     public ResponseEntity<Object> createUser(@Valid @RequestBody User user) {
-        User savedUser = repository.save(user);
+        User savedUser = userRepository.save(user);
 
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{id}")
@@ -60,14 +60,14 @@ public class UseJparResource {
 
     @DeleteMapping("/jpa/users/{id}")
     public void deleteUser(@PathVariable int id) {
-        repository.deleteById(id);
+        userRepository.deleteById(id);
     }
 
 
     // User 에 대한 Post 검색
     @GetMapping("/jpa/users/{id}/posts")
     public List<Post> retrievePostForUser(@PathVariable int id) {
-        Optional<User> user = repository.findById(id);
+        Optional<User> user = userRepository.findById(id);
         if(user.isEmpty())
             throw new UserNotFoundException("id: " + id);
 
@@ -77,7 +77,7 @@ public class UseJparResource {
     // 게시물 작성
     @PostMapping("/jpa/users/{id}/posts")
     public ResponseEntity<Object> createPostForUser(@PathVariable int id, @Valid @RequestBody Post post) {
-        Optional<User> user = repository.findById(id);
+        Optional<User> user = userRepository.findById(id);
         if(user.isEmpty())
             throw new UserNotFoundException("id: " + id);
 
